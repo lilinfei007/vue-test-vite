@@ -1,12 +1,14 @@
 <script setup>
 import { ref } from 'vue';
-import { getList } from '@/api/index.js';
-
+import { getList,add,put,del } from '@/api/index.js';
+import { message } from 'ant-design-vue';
 const form = ref({
   name:"",
   description:"",
   time:"",
-})
+});
+const handleObj = ref({});
+const curModalStatus = ref("add");
 const dataSource = ref([]);
 const columns = [
   {
@@ -28,6 +30,9 @@ const columns = [
     title: '待办状态',
     dataIndex: 'status',
     key: 'status',
+  },{
+    title:"操作",
+    key:"operate"
   }
 ]
 const getTableList = async () => {
@@ -37,22 +42,79 @@ const getTableList = async () => {
   }
 };
 getTableList()
+const addHandle = async () => {
+  let res = await add(form.value);
+  if(res.status == 0){
+    modalVisible.value = false;
+    getTableList();
+    message.success(res.message);
+  }else{
+    message.warning(res.message);
+  }
+}
 
-const modelVisible = ref(false);
+const editHandle = async () => {
+  let res = await put(handleObj.value.id,form.value);
+  if(res.status == 0){
+    modalVisible.value = false;
+    getTableList();
+    message.success(res.message);
+  }else{
+    message.warning(res.message);
+  }
+}
 const handleOk = () => {
-  modelVisible.value = false;
+  if(curModalStatus.value == "add"){
+    addHandle();
+  }else{
+    editHandle();
+  }
+};
+
+const showEditModal = (record) => {
+  // console.log(record)
+  handleObj.value = record;
+  const { name,description,time } = record;
+  form.value = {
+    name,
+    description,
+    time,
+  };
+  curModalStatus.value = "edit";
+  modalVisible.value = true;
+};
+
+const deleteHandle = async (record) => {
+  let res = await del(record.id);
+  if(res.status == 0){
+    getTableList();
+    message.success(res.message);
+  }else{
+    message.warning(res.message);
+  }
 };
 defineProps({
   msg: String,
-})
+});
+const onFinish = (values) => {
+  console.log('Success:', values);
+};
 
+const modalVisible = ref(false);
 const count = ref(0)
 </script>
 
 <template>
-  <div><a-button type="primary">新增待办</a-button></div>
-   <a-table :dataSource="dataSource" :columns="columns" />
-   <a-modal v-model:open="modalVisible" title="添加待办" @ok="handleOk">
+  <div><a-button @click="curModalStatus = 'add';modalVisible = true" type="primary">新增待办</a-button></div>
+   <a-table :dataSource="dataSource" :columns="columns">
+    <template #bodyCell="{ column,record }">
+      <template v-if="column.key == 'operate'">
+        <a @click="showEditModal(record )">修改</a>
+        <a style="margin-left:12px" @click="deleteHandle(record)">删除</a>
+      </template>
+    </template>
+   </a-table>
+   <a-modal v-model:open="modalVisible" :title="curModalStatus == 'add' ? '添加待办' : '修改待办'" @ok="handleOk">
     <a-form @finish="onFinish">
       <a-form-item label="待办名称">
         <a-input v-model:value="form.name" placeholder="请输入待办名称" />
@@ -61,7 +123,7 @@ const count = ref(0)
         <a-textarea v-model:value="form.description" placeholder="请输入待办详情" />
       </a-form-item>
       <a-form-item label="待办时间">
-        <a-date-picker v-model:value="form.time" />
+        <a-date-picker value-format="YYYY-MM-DD HH:mm:ss" show-time v-model:value="form.time" />
       </a-form-item>
     </a-form>
    </a-modal>
