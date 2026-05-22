@@ -5,7 +5,7 @@ import { message } from 'ant-design-vue';
 const form = ref({
   name:"",
   description:"",
-  time:"",
+  time:[],
 });
 const handleObj = ref({});
 const curModalStatus = ref("add");
@@ -43,7 +43,19 @@ const getTableList = async () => {
 };
 getTableList()
 const addHandle = async () => {
-  let res = await add(form.value);
+  let { name,description } = form.value;
+  let start_time = "";
+  let end_time = "";
+  if(form.value != null && Array.isArray(form.value.time)){
+    start_time = form.value.time[0];
+    end_time = form.value.time[1];
+  }
+  let res = await add({
+    name,
+    description,
+    start_time,
+    end_time
+  });
   if(res.status == 0){
     modalVisible.value = false;
     getTableList();
@@ -54,7 +66,19 @@ const addHandle = async () => {
 }
 
 const editHandle = async () => {
-  let res = await put(handleObj.value.id,form.value);
+  let { name,description } = form.value;
+  let start_time = "";
+  let end_time = "";
+  if(form.value != null && Array.isArray(form.value.time)){
+    start_time = form.value.time[0];
+    end_time = form.value.time[1];
+  }
+  let res = await put(handleObj.value.id,{
+    name,
+    description,
+    start_time,
+    end_time
+  });
   if(res.status == 0){
     modalVisible.value = false;
     getTableList();
@@ -74,18 +98,17 @@ const handleOk = () => {
 const showEditModal = (record) => {
   // console.log(record)
   handleObj.value = record;
-  const { name,description,time } = record;
+  const { name,description,start_time,end_time } = record;
   form.value = {
-    name,
-    description,
-    time,
-  };
+    name,description,
+    time:[start_time || '',end_time || '']
+  }
   curModalStatus.value = "edit";
   modalVisible.value = true;
 };
 
 const deleteHandle = async (record) => {
-  let res = await del(record.id);
+  let res = await del(record._id);
   if(res.status == 0){
     getTableList();
     message.success(res.message);
@@ -108,6 +131,9 @@ const count = ref(0)
   <div><a-button @click="curModalStatus = 'add';modalVisible = true" type="primary">新增待办</a-button></div>
    <a-table :dataSource="dataSource" :columns="columns">
     <template #bodyCell="{ column,record }">
+      <template v-if="column.key == 'time'">
+        {{ record.start_time }} - {{ record.end_time }}
+      </template>
       <template v-if="column.key == 'operate'">
         <a @click="showEditModal(record )">修改</a>
         <a style="margin-left:12px" @click="deleteHandle(record)">删除</a>
@@ -123,7 +149,13 @@ const count = ref(0)
         <a-textarea v-model:value="form.description" placeholder="请输入待办详情" />
       </a-form-item>
       <a-form-item label="待办时间">
-        <a-date-picker value-format="YYYY-MM-DD HH:mm:ss" show-time v-model:value="form.time" />
+        <a-range-picker
+          v-model:value="form.time"
+          :show-time="{ format: 'HH:mm' }"
+          format="YYYY-MM-DD HH:mm"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          :placeholder="['Start Time', 'End Time']"
+        />
       </a-form-item>
     </a-form>
    </a-modal>
