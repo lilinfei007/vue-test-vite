@@ -1,8 +1,13 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import { getList,add,put,del } from '@/api/index.js';
 import { message } from 'ant-design-vue';
-const form = ref({
+type Form = {
+  name: string;
+  description: string;
+  time: string[];
+};
+const form = ref<Form>({
   name:"",
   description:"",
   time:[],
