@@ -1,23 +1,40 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 const handleTypeOpen = ref(false);
 const typeName = ref("");
+interface FormState {
+  search: string;
+  type: string;
+}
+
+const formState = ref<FormState>({
+  search: '',
+  type: ''
+});
+const typeList = ref<number[]>([]);
 </script>
 <template>
   <div>
     <div class="tools-box">
-      <a-button type="primary">添加图书</a-button>
-      <a-button @click="handleTypeOpen = true" style="margin-left:10px">添加类别</a-button>
+      <a-form :model="formState" name="basic" layout="inline">
+        <a-form-item>
+          <a-input v-model:value="formState.search" placeholder="请输入图书名称" />
+        </a-form-item>
+        <a-form-item>
+          <a-select v-model="formState.type" placeholder="请选择类别">
+            <a-select-option v-for="index in typeList" :key="index">{{ index }}</a-select-option>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary">添加图书</a-button>
+        </a-form-item>
+        <a-form-item>
+          <a-button @click="handleTypeOpen = true" style="margin-left:10px">添加类别</a-button>
+        </a-form-item>
+      </a-form>
     </div>
     <div class="books-list">
-      <a-card class="book" v-for="index in 3" hoverable style="width: 240px">
-        <template #cover>
-          <img alt="example" src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png" />
-        </template>
-        <a-card-meta title="Europe Street beat">
-          <template #description>www.instagram.com</template>
-        </a-card-meta>
-      </a-card>
+       <a-empty style="margin:20px auto" />
     </div>
     <a-modal v-model:open="handleTypeOpen" title="添加类别">
       <a-input placeholder="请输入类别名称" v-model:value="typeName" />
