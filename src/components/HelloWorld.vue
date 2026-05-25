@@ -1,20 +1,29 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { getList,add,put,del } from '@/api/index.js';
+import { getList,add,put,del } from '@/api';
 import { message } from 'ant-design-vue';
 type Form = {
   name: string;
   description: string;
   time: string[];
 };
+type TodoRecord = {
+  _id?: string;
+  id?: string;
+  name: string;
+  description: string;
+  start_time?: string;
+  end_time?: string;
+  status?: string;
+};
 const form = ref<Form>({
   name:"",
   description:"",
   time:[],
 });
-const handleObj = ref({});
+const handleObj = ref<TodoRecord | null>(null);
 const curModalStatus = ref("add");
-const dataSource = ref([]);
+const dataSource = ref<TodoRecord[]>([]);
 const columns = [
   {
     title: '待办名称',
@@ -78,7 +87,7 @@ const editHandle = async () => {
     start_time = form.value.time[0];
     end_time = form.value.time[1];
   }
-  let res = await put(handleObj.value.id,{
+  let res = await put(handleObj.value?.id || handleObj.value?._id || '',{
     name,
     description,
     start_time,
@@ -100,7 +109,7 @@ const handleOk = () => {
   }
 };
 
-const showEditModal = (record) => {
+const showEditModal = (record: TodoRecord) => {
   // console.log(record)
   handleObj.value = record;
   const { name,description,start_time,end_time } = record;
@@ -112,8 +121,8 @@ const showEditModal = (record) => {
   modalVisible.value = true;
 };
 
-const deleteHandle = async (record) => {
-  let res = await del(record._id);
+const deleteHandle = async (record: TodoRecord) => {
+  let res = await del(record._id || record.id || '');
   if(res.status == 0){
     getTableList();
     message.success(res.message);
@@ -124,12 +133,11 @@ const deleteHandle = async (record) => {
 defineProps({
   msg: String,
 });
-const onFinish = (values) => {
+const onFinish = (values: Form) => {
   console.log('Success:', values);
 };
 
 const modalVisible = ref(false);
-const count = ref(0)
 </script>
 
 <template>
